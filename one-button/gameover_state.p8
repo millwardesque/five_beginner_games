@@ -18,7 +18,11 @@ gameover_state = {
         high_score_y = 72
         print("high scores", 44, high_score_y, 7)
         for i, s in pairs(high_scores) do
-            print(i..": "..s, 44, high_score_y + i * 7, 7)
+            local color = 7
+            if (s == score) then
+                color = 11
+            end
+            print(i..": "..s, 44, high_score_y + i * 7, color)
         end
 
         if (debug) then

@@ -4,7 +4,7 @@ A simple one-button game like Flappy Bird.
 
 ## TODO
 
-- Change obstacle generation to allow top to extend beyond halfway (and vice-versa) as long as there is a gap
+- Jitter gap position according to previous gap position
 - Art for player
 - Art for obstacles
 - Background

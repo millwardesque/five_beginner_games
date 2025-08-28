@@ -75,7 +75,7 @@ function calculate_obstacle_pair_height(p)
         return
     end
 
-    local min_gap = min(12 + 100 / (score + 1), 24)
+    local min_gap = min(16 + 100 / (score + 1), 32)
     local max_gap = min(max(96 * 100 / (score + 1), min_gap), 96)
     local step_size = 8
     local max_steps = (max_gap - min_gap) / step_size
@@ -84,8 +84,6 @@ function calculate_obstacle_pair_height(p)
 
     local gap_size = min_gap + num_steps * step_size
     local gap_y = 64 - flr(gap_size / 2)
-
-    local top_offset = gap_size
 
     top.h = gap_y
     bottom.y = gap_y + gap_size
@@ -142,16 +140,10 @@ function reset_game()
             c = color,
         }
         local obstacle_pair = {top = new_obstacle_top, bottom = new_obstacle_bottom}
-        calculate_obstacle_pair_height(obstacle_pair)
-
         add(obstacles, new_obstacle_top)
         add(obstacles, new_obstacle_bottom)
         add(obstacle_pairs, obstacle_pair)
     end
-end
-
-function calc_obstacle_height()
-    return 16 + flr(rnd(6)) * 8
 end
 
 function check_player_obstacle_collision(p, o, debug)
