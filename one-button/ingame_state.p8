@@ -1,4 +1,5 @@
-obstacle_width = 8
+local obstacle_width = 8
+local slowdown_factor = 0.9
 
 ingame_state = {
     init = function()
@@ -7,10 +8,11 @@ ingame_state = {
 
     update = function()
         if (btn(2)) then
-            player.y -= player.speed
-        else
-            player.y += player.gravity
+            player.speed = 2
         end
+
+        player.speed = player.speed * slowdown_factor
+        player.y -= player.speed + player.gravity
 
         foreach(obstacles, update_obstacle)
 
@@ -74,7 +76,8 @@ function reset_game()
         r_collision = 2,
         c = 7,
         speed = 2,
-        gravity = 1
+        gravity = -1,
+        acceleration = 0
     }
 
     score = 0

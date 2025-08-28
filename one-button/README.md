@@ -4,7 +4,6 @@ A simple one-button game like Flappy Bird.
 
 ## TODO
 
-- Player bounces on button press, doesn't ascend
 - Art for player
 - Art for obstacles
 - Background
