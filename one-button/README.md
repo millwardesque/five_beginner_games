@@ -4,6 +4,7 @@ A simple one-button game like Flappy Bird.
 
 ## TODO
 
+- Change obstacle generation to allow top to extend beyond halfway (and vice-versa) as long as there is a gap
 - Art for player
 - Art for obstacles
 - Background
@@ -14,7 +15,6 @@ A simple one-button game like Flappy Bird.
 - Power ups
 - Player animations
 - Increase speed over time?
-- Change obstacle generation to allow top to extend beyond halfway (and vice-versa) as long as there is a gap
 - Spawn static obstacles
 - High-score (persistent)
 - Name for high-scores

@@ -65,10 +65,32 @@ end
 function calculate_obstacle_pair_height(p)
     local top = p.top
     local bottom = p.bottom
+    local hidden_threshold = max(0.4 - 0.0001 * score, 0)
+    local is_hidden = rnd() < hidden_threshold
 
-    top.h = calc_obstacle_height()
-    bottom.h = calc_obstacle_height()
-    bottom.y = 128 - bottom.h
+    if (is_hidden) then
+        top.h = 0
+        bottom.y = 128
+        bottom.h = 0
+        return
+    end
+
+    local min_gap = min(12 + 100 / (score + 1), 24)
+    local max_gap = min(max(96 * 100 / (score + 1), min_gap), 96)
+    local step_size = 8
+    local max_steps = (max_gap - min_gap) / step_size
+    max_steps += 1 -- Account for rnd being exclusive and thus never returning 1
+    local num_steps = flr(rnd() * max_steps)
+
+    local gap_size = min_gap + num_steps * step_size
+    local gap_y = 64 - flr(gap_size / 2)
+
+    local top_offset = gap_size
+
+    top.h = gap_y
+    bottom.y = gap_y + gap_size
+    bottom.h = 128 - bottom.y
+
 end
 
 function draw_obstacle(o)
