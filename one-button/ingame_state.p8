@@ -1,5 +1,7 @@
 local obstacle_width = 8
 local slowdown_factor = 0.9
+local obstacle_pairs = {}
+local was_pressed = false
 
 ingame_state = {
     init = function()
@@ -8,13 +10,18 @@ ingame_state = {
 
     update = function()
         if (btn(2)) then
-            player.speed = 2
+            if (was_pressed == false) then
+                player.speed = 2.5
+                was_pressed = true
+            end
+        else
+            was_pressed = false
         end
 
         player.speed = player.speed * slowdown_factor
         player.y -= player.speed + player.gravity
 
-        foreach(obstacles, update_obstacle)
+        foreach(obstacle_pairs, update_obstacle_pair)
 
         score += scroll_speed
 
@@ -39,21 +46,29 @@ ingame_state = {
 }
 
 
-function update_obstacle(o)
-    o.x -= scroll_speed
+function update_obstacle_pair(p)
+    local top = p.top
+    local bottom = p.bottom
+    top.x -= scroll_speed
+    bottom.x -= scroll_speed
 
-    -- If we've scrolled offscreen, wrap to the beginning and generate a new height
-    if (o.x + o.w <= 0) then
-        o.x = 128
+    local is_offscreen = top.x + top.w <= 0
 
-        local is_bottom = o.y + o.h == 128
-        local new_height = calc_obstacle_height(is_bottom)
-
-        o.h = new_height
-        if is_bottom then
-            o.y = 128 - new_height
-        end
+    -- If we've scrolled offscreen, wrap to the beginning and generate new heights
+    if (is_offscreen) then
+        top.x = 128
+        bottom.x = 128
+        calculate_obstacle_pair_height(p)
     end
+end
+
+function calculate_obstacle_pair_height(p)
+    local top = p.top
+    local bottom = p.bottom
+
+    top.h = calc_obstacle_height()
+    bottom.h = calc_obstacle_height()
+    bottom.y = 128 - bottom.h
 end
 
 function draw_obstacle(o)
@@ -75,8 +90,8 @@ function reset_game()
         r = 3,
         r_collision = 2,
         c = 7,
-        speed = 2,
-        gravity = -1,
+        speed = 1,
+        gravity = -1.2,
         acceleration = 0
     }
 
@@ -84,36 +99,37 @@ function reset_game()
 
     -- Generate obstacles
     obstacles = {}
+    obstacle_pairs = {}
     local columns = 128 / obstacle_width
     for i = 0, columns do
+        local x = i * obstacle_width
+        local color = 1 + i % 15
         local new_obstacle_top = {
-            x = i * obstacle_width,
+            x = x,
             w = obstacle_width,
             y = 0,
-            h = calc_obstacle_height(false),
-            c = i % 16
+            h = 0,
+            c = color,
         }
 
-        local bottom_h = calc_obstacle_height(true)
         local new_obstacle_bottom = {
-            x = i * obstacle_width,
-            y = 128 - bottom_h,
+            x = x,
+            y = 128,
             w = obstacle_width,
-            h = bottom_h,
-            c = i % 16
+            h = 0,
+            c = color,
         }
+        local obstacle_pair = {top = new_obstacle_top, bottom = new_obstacle_bottom}
+        calculate_obstacle_pair_height(obstacle_pair)
 
         add(obstacles, new_obstacle_top)
         add(obstacles, new_obstacle_bottom)
+        add(obstacle_pairs, obstacle_pair)
     end
 end
 
-function calc_obstacle_height(is_bottom)
-    local max_h = 6
-    if is_bottom then
-        max_h = 6
-    end
-    return 16 + flr(rnd(max_h)) * 7
+function calc_obstacle_height()
+    return 16 + flr(rnd(6)) * 8
 end
 
 function check_player_obstacle_collision(p, o, debug)

@@ -13,11 +13,11 @@ A simple one-button game like Flappy Bird.
 - Title screen
 - Power ups
 - Player animations
-- Name for high-scores
 - Increase speed over time?
 - Change obstacle generation to allow top to extend beyond halfway (and vice-versa) as long as there is a gap
 - Spawn static obstacles
 - High-score (persistent)
+- Name for high-scores
 
 ### Bugs
 
