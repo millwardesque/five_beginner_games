@@ -1,7 +1,12 @@
-local obstacle_width = 8
-local slowdown_factor = 0.9
+local default_gravity = -1.4
+local force_obstacle_height_to_zero = true
+local skip_gravity = true
+local obstacle_width = 16
+local jump_impulse = 10.0
+local slowdown_factor = 0.6
 local obstacle_pairs = {}
 local was_pressed = false
+local player_has_started = false
 
 ingame_state = {
     init = function()
@@ -11,8 +16,14 @@ ingame_state = {
     update = function()
         if (btn(2)) then
             if (was_pressed == false) then
-                player.speed = 2.5
+                player.speed = jump_impulse
                 was_pressed = true
+
+                if (player_has_started == false) then
+                    force_obstacle_height_to_zero = false
+                    player.gravity = default_gravity
+                    player_has_started = true
+                end
             end
         else
             was_pressed = false
@@ -23,7 +34,9 @@ ingame_state = {
 
         foreach(obstacle_pairs, update_obstacle_pair)
 
-        score += scroll_speed
+        if (player_has_started) then
+            score += scroll_speed
+        end
 
         for o in all(obstacles) do
             if check_player_obstacle_collision(player, o) then
@@ -45,7 +58,6 @@ ingame_state = {
     end
 }
 
-
 function update_obstacle_pair(p)
     local top = p.top
     local bottom = p.bottom
@@ -65,8 +77,8 @@ end
 function calculate_obstacle_pair_height(p)
     local top = p.top
     local bottom = p.bottom
-    local hidden_threshold = max(0.4 - 0.0001 * score, 0)
-    local is_hidden = rnd() < hidden_threshold
+    local hidden_threshold = max(0.7 - 0.0001 * score, 0)
+    local is_hidden = rnd() < hidden_threshold or force_obstacle_height_to_zero;
 
     if (is_hidden) then
         top.h = 0
@@ -101,6 +113,11 @@ function draw_player(p)
 end
 
 function reset_game()
+    was_pressed = false
+    player_has_started = false
+    force_obstacle_height_to_zero = true
+    skip_gravity = true
+
     scroll_speed = 1
     sky_colour = 12
 
@@ -110,8 +127,8 @@ function reset_game()
         r = 3,
         r_collision = 2,
         c = 7,
-        speed = 1,
-        gravity = -1.2,
+        speed = 0,
+        gravity = 0,
         acceleration = 0
     }
 
