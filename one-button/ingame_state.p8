@@ -4,7 +4,7 @@ local skip_gravity = true
 local ground_tile_width = 8
 local obstacle_width = 16
 local jump_impulse = 10.0
-local slowdown_factor = 0.7
+local slowdown_factor = 0.6
 local ground_tiles = {}
 local obstacle_pairs = {}
 local was_pressed = false
@@ -17,6 +17,8 @@ local OBSTACLE_LEFT_SPR = 1
 local OBSTACLE_RIGHT_SPR = 2
 local OBSTACLE_LEFT_CAP_SPR = OBSTACLE_LEFT_SPR + 16
 local OBSTACLE_RIGHT_CAP_SPR = OBSTACLE_RIGHT_SPR + 16
+local FIXED_HEIGHT = 32
+local COLUMN_SPACING = 48
 
 ingame_state = {
     init = function()
@@ -101,30 +103,20 @@ end
 function calculate_obstacle_pair_height(p)
     local top = p.top
     local bottom = p.bottom
-    local hidden_threshold = max(0.7 - 0.0001 * score, 0)
-    local is_hidden = rnd() < hidden_threshold or force_obstacle_height_to_zero;
-
-    if (is_hidden) then
+    if (force_obstacle_height_to_zero) then
         top.h = 0
         bottom.y = 128
         bottom.h = 0
         return
     end
 
-    local min_gap = min(16 + 100 / (score + 1), 32)
-    local max_gap = min(max(96 * 100 / (score + 1), min_gap), 96)
-    local step_size = 8
-    local max_steps = (max_gap - min_gap) / step_size
-    max_steps += 1 -- Account for rnd being exclusive and thus never returning 1
-    local num_steps = flr(rnd() * max_steps)
-
-    local gap_size = min_gap + num_steps * step_size
-    local gap_y = 64 - flr(gap_size / 2)
+    -- Leave room for pipe, min-top-height, terrain, and full gap
+    local max_top_y = 128 - 8 - 16 - 8 - FIXED_HEIGHT
+    local gap_y = 16 + flr(rnd() * max_top_y)
 
     top.h = gap_y
-    bottom.y = gap_y + gap_size
+    bottom.y = gap_y + FIXED_HEIGHT
     bottom.h = 128 - bottom.y
-
 end
 
 function draw_obstacle(o)
@@ -206,9 +198,9 @@ function reset_game()
     -- Generate obstacles
     obstacles = {}
     obstacle_pairs = {}
-    local columns = 128 / obstacle_width
+    local columns = min(1, (128 / COLUMN_SPACING) - 1)
     for i = 0, columns do
-        local x = i * obstacle_width
+        local x = i * COLUMN_SPACING
         local color = 1 + i % 15
         local new_obstacle_top = {
             x = x,

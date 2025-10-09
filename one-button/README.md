@@ -4,7 +4,9 @@ A simple one-button game like Flappy Bird.
 
 ## TODO
 
-- Gap size is fixed, horizontal spacing is fixed, gap placement changes per pipe
+- Bug: horizontal spacing sometimes draws a pipe when it shouldn't
+- Bug: Distance between current pipe y and previous pipe y should be an achievable distance
+- Bug: Collision detection is off, try drawing collision shapes
 - Sound FX
 - Music
 - Juice
