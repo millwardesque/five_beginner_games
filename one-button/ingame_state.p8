@@ -1,12 +1,22 @@
 local default_gravity = -1.4
 local force_obstacle_height_to_zero = true
 local skip_gravity = true
+local ground_tile_width = 8
 local obstacle_width = 16
 local jump_impulse = 10.0
-local slowdown_factor = 0.6
+local slowdown_factor = 0.7
+local ground_tiles = {}
 local obstacle_pairs = {}
 local was_pressed = false
 local player_has_started = false
+local GROUND_TILE_SPR = 4
+local PLAYER_SPR = 3
+local PLAYER_UP_SPR = PLAYER_SPR + 16
+local PLAYER_DOWN_SPR = PLAYER_UP_SPR + 16
+local OBSTACLE_LEFT_SPR = 1
+local OBSTACLE_RIGHT_SPR = 2
+local OBSTACLE_LEFT_CAP_SPR = OBSTACLE_LEFT_SPR + 16
+local OBSTACLE_RIGHT_CAP_SPR = OBSTACLE_RIGHT_SPR + 16
 
 ingame_state = {
     init = function()
@@ -18,6 +28,7 @@ ingame_state = {
             if (was_pressed == false) then
                 player.speed = jump_impulse
                 was_pressed = true
+                sfx(0)
 
                 if (player_has_started == false) then
                     force_obstacle_height_to_zero = false
@@ -32,6 +43,7 @@ ingame_state = {
         player.speed = player.speed * slowdown_factor
         player.y -= player.speed + player.gravity
 
+        foreach(ground_tiles, update_ground_tile)
         foreach(obstacle_pairs, update_obstacle_pair)
 
         if (player_has_started) then
@@ -50,13 +62,25 @@ ingame_state = {
     draw = function()
         cls(sky_colour)
 
+        map(0, 0, 0, 0, 16, 16)
+
         foreach(obstacles, draw_obstacle)
+        foreach(ground_tiles, draw_ground_tile)
         draw_player(player)
 
-        rectfill(0, 0, 127, 7, 0)
+        rectfill(0, 0, 127, 7, 1)
         print("Score: "..score, 1, 1, 7)
     end
 }
+
+function update_ground_tile(t)
+    t.x -= scroll_speed
+
+    local is_offscreen = t.x + ground_tile_width <= 0
+    if (is_offscreen) then
+        t.x = 128
+    end
+end
 
 function update_obstacle_pair(p)
     local top = p.top
@@ -104,12 +128,44 @@ function calculate_obstacle_pair_height(p)
 end
 
 function draw_obstacle(o)
-    rectfill(o.x, o.y, o.x + o.w - 1, o.y + o.h - 1, o.c)
-    rect(o.x, o.y, o.x + o.w - 1, o.y + o.h - 1, 0)
+    local num_to_draw = 1 + (o.h / 8)
+    for i = 0, num_to_draw do
+        local start_y = o.y
+        local is_cap = (i == 0)
+        if (o.is_top) then
+            start_y += o.h - 8 * (i + 1)
+        else
+            start_y += 8 * (i + 1)
+        end
+
+        local flip_y = o.is_top == false
+        local left_spr = OBSTACLE_LEFT_SPR
+        local right_spr = OBSTACLE_RIGHT_SPR
+        if (is_cap) then
+            left_spr = OBSTACLE_LEFT_CAP_SPR
+            right_spr = OBSTACLE_RIGHT_CAP_SPR
+        end
+
+        spr(left_spr, o.x, start_y, 1, 1, false, flip_y)
+        spr(right_spr, o.x + 8, start_y, 1, 1, false, flip_y)
+    end
+end
+
+function draw_ground_tile(t)
+    spr(GROUND_TILE_SPR, t.x, t.y)
 end
 
 function draw_player(p)
-    circfill(p.x, p.y, p.r, p.c)
+    local sprite = PLAYER_SPR
+    local level_threshold = 0.2
+    local net_speed = p.speed + p.gravity
+    if (net_speed > level_threshold) then
+        sprite = PLAYER_UP_SPR
+    elseif (net_speed < -level_threshold) then
+        sprite = PLAYER_DOWN_SPR
+    end
+
+    spr(sprite, p.x, p.y)
 end
 
 function reset_game()
@@ -134,6 +190,19 @@ function reset_game()
 
     score = 0
 
+    -- Generate ground
+    ground_tiles = {}
+    local num_ground_tiles = 128 / ground_tile_width
+    local ground_tile_y = 128 - 8;
+    for i = 0, num_ground_tiles do
+        local x = i * ground_tile_width
+        local new_tile = {
+            x = x,
+            y = ground_tile_y
+        }
+        add(ground_tiles, new_tile)
+    end
+
     -- Generate obstacles
     obstacles = {}
     obstacle_pairs = {}
@@ -147,6 +216,7 @@ function reset_game()
             y = 0,
             h = 0,
             c = color,
+            is_top = true
         }
 
         local new_obstacle_bottom = {
@@ -155,6 +225,7 @@ function reset_game()
             w = obstacle_width,
             h = 0,
             c = color,
+            is_top = false,
         }
         local obstacle_pair = {top = new_obstacle_top, bottom = new_obstacle_bottom}
         add(obstacles, new_obstacle_top)

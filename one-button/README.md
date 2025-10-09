@@ -4,10 +4,7 @@ A simple one-button game like Flappy Bird.
 
 ## TODO
 
-- Jitter gap position according to previous gap position
-- Art for player
-- Art for obstacles
-- Background
+- Gap size is fixed, horizontal spacing is fixed, gap placement changes per pipe
 - Sound FX
 - Music
 - Juice
