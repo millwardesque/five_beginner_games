@@ -20,6 +20,7 @@ local OBSTACLE_RIGHT_CAP_SPR = OBSTACLE_RIGHT_SPR + 16
 local PIPE_GAP_HEIGHT = 32
 local COLUMN_SPACING = 64
 local MAX_GAP_SIZE = 64
+local debug_draw_colliders = true
 
 ingame_state = {
     init = function()
@@ -140,7 +141,7 @@ function draw_obstacle(o)
         if (o.is_top) then
             start_y += o.h - 8 * (i + 1)
         else
-            start_y += 8 * (i + 1)
+            start_y += 8 * i
         end
 
         local flip_y = o.is_top == false
@@ -154,10 +155,21 @@ function draw_obstacle(o)
         spr(left_spr, o.x, start_y, 1, 1, false, flip_y)
         spr(right_spr, o.x + 8, start_y, 1, 1, false, flip_y)
     end
+
+    if debug_draw_colliders then
+        rect(o.x, o.y, o.x + o.w, o.y + o.h, 8)
+    end
 end
 
 function draw_ground_tile(t)
     spr(GROUND_TILE_SPR, t.x, t.y)
+end
+
+function sprite_center(s)
+    return {
+        x = s.x + 4,
+        y = s.y + 4
+    }
 end
 
 function draw_player(p)
@@ -171,6 +183,12 @@ function draw_player(p)
     end
 
     spr(sprite, p.x, p.y)
+
+    if debug_draw_colliders then
+        local p_centre = sprite_center(p)
+        pset(p_centre.x, p_centre.y, 7)
+        circ(p_centre.x, p_centre.y, p.r, 7)
+    end
 end
 
 function reset_game()
@@ -185,9 +203,7 @@ function reset_game()
     player = {
         x = 64,
         y = 64,
-        r = 3,
-        r_collision = 2,
-        c = 7,
+        r = 2,
         speed = 0,
         gravity = 0,
         acceleration = 0
@@ -250,28 +266,30 @@ function reset_game()
 end
 
 function check_player_obstacle_collision(p, o, debug)
-    local test_x = p.x
-    local test_y = p.y
+    local p_centre = sprite_center(p)
 
-    if p.x > o.x + o.w then
+    local test_x = p_centre.x
+    local test_y = p_centre.y
+
+    if p_centre.x > o.x + o.w then
         test_x = o.x + o.w
-    elseif p.x < o.x then
+    elseif p_centre.x < o.x then
         test_x = o.x
     end
 
-    if p.y > o.y + o.h then
+    if p_centre.y > o.y + o.h then
         test_y = o.y + o.h
-    elseif p.y < o.y then
+    elseif p_centre.y < o.y then
         test_y = o.y
     end
 
-    local dist_x = p.x - test_x
-    local dist_y = p.y - test_y
+    local dist_x = p_centre.x - test_x
+    local dist_y = p_centre.y - test_y
     local distance = sqrt((dist_x * dist_x) + (dist_y * dist_y))
 
     if debug then
-        print(test_x..", "..test_y..", "..dist_x..", "..dist_y..", "..distance..", "..p.r_collision)
+        print(test_x..", "..test_y..", "..dist_x..", "..dist_y..", "..distance..", "..p.r)
     end
 
-    return distance <= p.r_collision
+    return distance <= p.r
 end
