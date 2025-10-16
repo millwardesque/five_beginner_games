@@ -17,8 +17,9 @@ local OBSTACLE_LEFT_SPR = 1
 local OBSTACLE_RIGHT_SPR = 2
 local OBSTACLE_LEFT_CAP_SPR = OBSTACLE_LEFT_SPR + 16
 local OBSTACLE_RIGHT_CAP_SPR = OBSTACLE_RIGHT_SPR + 16
-local FIXED_HEIGHT = 32
-local COLUMN_SPACING = 48
+local PIPE_GAP_HEIGHT = 32
+local COLUMN_SPACING = 64
+local MAX_GAP_SIZE = 64
 
 ingame_state = {
     init = function()
@@ -70,10 +71,14 @@ ingame_state = {
         foreach(ground_tiles, draw_ground_tile)
         draw_player(player)
 
-        rectfill(0, 0, 127, 7, 1)
-        print("Score: "..score, 1, 1, 7)
+        draw_score(score)
     end
 }
+
+function draw_score(s)
+    rectfill(0, 0, 127, 7, 1)
+    print("Score: "..s, 1, 1, 7)
+end
 
 function update_ground_tile(t)
     t.x -= scroll_speed
@@ -111,11 +116,19 @@ function calculate_obstacle_pair_height(p)
     end
 
     -- Leave room for pipe, min-top-height, terrain, and full gap
-    local max_top_y = 128 - 8 - 16 - 8 - FIXED_HEIGHT
+    local max_top_y = 128 - 8 - 16 - 8 - PIPE_GAP_HEIGHT
     local gap_y = 16 + flr(rnd() * max_top_y)
+    local prev_y = top.prev.y
+    local prev_gap = top.y - prev_y
+
+    if prev_gap > MAX_GAP_SIZE then
+        gap_y = prev_y + MAX_GAP_SIZE
+    elseif prev_gap < -MAX_GAP_SIZE then
+        gap_y = prev_y - MAX_GAP_SIZE
+    end
 
     top.h = gap_y
-    bottom.y = gap_y + FIXED_HEIGHT
+    bottom.y = gap_y + PIPE_GAP_HEIGHT
     bottom.h = 128 - bottom.y
 end
 
@@ -198,17 +211,17 @@ function reset_game()
     -- Generate obstacles
     obstacles = {}
     obstacle_pairs = {}
-    local columns = min(1, (128 / COLUMN_SPACING) - 1)
-    for i = 0, columns do
-        local x = i * COLUMN_SPACING
-        local color = 1 + i % 15
+    local columns = max(1, (128 / COLUMN_SPACING))
+    for i = 1, columns do
+        local x = (i - 1) * COLUMN_SPACING
         local new_obstacle_top = {
             x = x,
             w = obstacle_width,
             y = 0,
             h = 0,
-            c = color,
-            is_top = true
+            is_top = true,
+            prev = nil,
+            index = i
         }
 
         local new_obstacle_bottom = {
@@ -216,14 +229,24 @@ function reset_game()
             y = 128,
             w = obstacle_width,
             h = 0,
-            c = color,
             is_top = false,
+            prev = nil,
+            index = i
         }
+
+        if i > 1 then
+            new_obstacle_bottom.prev = obstacle_pairs[i - 1].bottom
+            new_obstacle_top.prev = obstacle_pairs[i - 1].top
+        end
+
         local obstacle_pair = {top = new_obstacle_top, bottom = new_obstacle_bottom}
         add(obstacles, new_obstacle_top)
         add(obstacles, new_obstacle_bottom)
         add(obstacle_pairs, obstacle_pair)
     end
+
+    obstacle_pairs[1].top.prev = obstacle_pairs[columns].top
+    obstacle_pairs[1].bottom.prev = obstacle_pairs[columns].bottom
 end
 
 function check_player_obstacle_collision(p, o, debug)
