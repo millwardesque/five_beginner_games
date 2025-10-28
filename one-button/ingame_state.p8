@@ -17,10 +17,10 @@ local OBSTACLE_LEFT_SPR = 1
 local OBSTACLE_RIGHT_SPR = 2
 local OBSTACLE_LEFT_CAP_SPR = OBSTACLE_LEFT_SPR + 16
 local OBSTACLE_RIGHT_CAP_SPR = OBSTACLE_RIGHT_SPR + 16
-local PIPE_GAP_HEIGHT = 32
-local COLUMN_SPACING = 64
-local MAX_GAP_SIZE = 64
-local debug_draw_colliders = true
+local PIPE_GAP_HEIGHT = 28
+local COLUMN_SPACING = 48
+local MAX_GAP_SIZE = 32
+local debug_draw_colliders = false
 
 ingame_state = {
     init = function()
@@ -227,7 +227,7 @@ function reset_game()
     -- Generate obstacles
     obstacles = {}
     obstacle_pairs = {}
-    local columns = max(1, (128 / COLUMN_SPACING))
+    local columns = max(1, ceil(128 / COLUMN_SPACING))
     for i = 1, columns do
         local x = (i - 1) * COLUMN_SPACING
         local new_obstacle_top = {
